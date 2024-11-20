@@ -1,5 +1,4 @@
-// controllers/authController.js
-const User = require('../models/User');
+const User = require('../models/user');
 const jwt = require('jsonwebtoken');
 const { OAuth2Client } = require('google-auth-library');
 

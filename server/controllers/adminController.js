@@ -1,6 +1,6 @@
 // controllers/adminController.js
 const Document = require('../models/Document');
-const User = require('../models/User');
+const User = require('../models/user');
 
 exports.getAdmins = async (req, res) => {
   try {
@@ -9,6 +9,23 @@ exports.getAdmins = async (req, res) => {
   } catch (error) {
     console.error("Fetch admins error:", error);
     res.status(500).json({ error: "Failed to fetch admins" });
+  }
+};
+
+exports.getAdminById = async (req, res) => {
+  try {
+    const adminId = req.params.id; 
+    
+    const admin = await User.findById(adminId).select('-password');
+    
+    if (!admin) {
+      return res.status(404).json({ error: "Admin not found" });
+    }
+    
+    res.json(admin);
+  } catch (error) {
+    console.error("Fetch admin by ID error:", error);
+    res.status(500).json({ error: "Failed to fetch admin" });
   }
 };
 
