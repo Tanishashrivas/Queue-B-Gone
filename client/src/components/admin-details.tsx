@@ -10,12 +10,14 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import axios from "axios";
 import { ChangeEvent, FormEvent, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import FileUpload from "./file-upload";
+import PaymentPage from "./payment-page";
+import PaymentProcessing from "./payment-loading";
 
 interface Admin {
   id: string;
@@ -31,17 +33,17 @@ interface PrintOption {
 const AdminDetails = () => {
   const { id } = useParams<{ id: string }>();
   const [admin, setAdmin] = useState<Admin | null>(null);
-
   const navigate = useNavigate();
   const { addToast } = useToast();
   const [file, setFile] = useState<File | null>(null);
   const [printType, setPrintType] = useState<"B/W" | "Color">("B/W");
   const [totalCost, setTotalCost] = useState<number>(0);
-  const token = localStorage.getItem('token');
+  const [showPayment, setShowPayment] = useState(false);
+  const token = localStorage.getItem("token");
 
   const printOptions: PrintOption[] = [
-    { type: "B/W", cost: 0.1 },
-    { type: "Color", cost: 0.5 },
+    { type: "B/W", cost: 5 },
+    { type: "Color", cost: 10 },
   ];
 
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
@@ -88,28 +90,85 @@ const AdminDetails = () => {
       return;
     }
 
-    addToast(
-      "Processing...",
-      "We are uploading your file and processing the payment.",
-      "info"
-    );
-
-    await new Promise((resolve) => setTimeout(resolve, 2000));
-
-    addToast(
-      "Payment Successful",
-      `Your payment of $${totalCost.toFixed(
-        2
-      )} has been processed. Enjoy your print!`,
-      "success"
-    );
-
-    navigate(
-      `/payment-successful?adminId=${admin.id}&fileName=${
-        file.name
-      }&cost=${totalCost.toFixed(2)}`
-    );
+    setShowPayment(true);
   };
+
+  const handlePaymentSuccess = async () => {
+    if (admin && admin.id) {
+      const formData = new FormData();
+      formData.append("file", file!);
+      formData.append("adminId", admin.id);
+      formData.append("printType", printType);
+
+      try {
+        const response = await axios.post(
+          `http://localhost:5000/api/document/upload`,
+          formData,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "multipart/form-data",
+            },
+          }
+        );
+
+        console.log(response.data);
+
+        addToast(
+          "Upload Successful",
+          `Your file has been uploaded and payment of Rs ${totalCost.toFixed(
+            2
+          )} has been processed.`,
+          "success"
+        );
+
+        navigate(
+          `/payment-successful?adminId=${admin.id}&fileName=${
+            file!.name
+          }&cost=${totalCost.toFixed(2)}`
+        );
+      } catch (error) {
+        console.error("Error uploading file:", error);
+        addToast("Error uploading file", "Please try again.", "destructive");
+      }
+    } else {
+      addToast(
+        "Admin ID Missing",
+        "Unable to proceed with the upload as the admin ID is missing.",
+        "destructive"
+      );
+    }
+  };
+
+  const handlePaymentCancel = () => {
+    setShowPayment(false);
+  };
+
+  useEffect(() => {
+    if (!id) {
+      return;
+    }
+
+    const fetchAdminData = async () => {
+      try {
+        const response = await axios.get(
+          `http://localhost:5000/api/admin/${id}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        console.log("Admin data fetched successfully:", response.data);
+        setAdmin(response.data);
+      } catch (error) {
+        console.error("Error fetching admin data:", error);
+        addToast("Error fetching admin data", "Error", "destructive");
+      }
+    };
+
+    fetchAdminData();
+  }, [id, token]);
 
   if (!admin) {
     return (
@@ -135,27 +194,18 @@ const AdminDetails = () => {
     );
   }
 
-  useEffect(() => {
-    if (!id) return;  
-    
-    const fetchAdminData = async () => {
-      try {
-        const response = await axios.get(`http://localhost:5000/api/admin/${id}`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
-        });
-        setAdmin(response.data);
-      } catch (error) {
-        console.error("Error fetching admin data:", error);
-        addToast("Error fetching admin data", "Error", "destructive");
-      }
-    };
-    
-    fetchAdminData();
-  }, [id, token]);   
-
-  console.log("admin details", admin)
+  if (showPayment) {
+    return (
+      // <PaymentPage
+      //   adminId={admin.id}
+      //   fileName={file!.name}
+      //   totalCost={totalCost}
+      //   onPaymentSuccess={handlePaymentSuccess}
+      //   onPaymentCancel={handlePaymentCancel}
+      // />
+      <PaymentProcessing onComplete={handlePaymentSuccess}/>
+    );
+  }
 
   return (
     <Card className="w-full max-w-2xl mx-auto">
@@ -168,13 +218,18 @@ const AdminDetails = () => {
       <form onSubmit={handleSubmit}>
         <CardContent className="space-y-4 pt-6">
           <div>
-            <Label htmlFor="file-upload">Upload File</Label>
-            <Input
-              id="file-upload"
-              type="file"
-              onChange={handleFileChange}
-              className="mt-1"
+            <Label>Upload File</Label>
+            <FileUpload
+              onFileSelect={(file) => {
+                setFile(file);
+                calculateTotalCost(file, printType);
+              }}
             />
+            {file && (
+              <p className="mt-2 text-gray-600">
+                <strong>Uploaded file:</strong> {file.name}
+              </p>
+            )}
           </div>
           <div>
             <Label>Print Type</Label>
@@ -187,7 +242,7 @@ const AdminDetails = () => {
                 <div key={option.type} className="flex items-center space-x-2">
                   <RadioGroupItem value={option.type} id={option.type} />
                   <Label htmlFor={option.type}>
-                    {option.type} (${option.cost.toFixed(2)}/page)
+                    {option.type} (Rs {option.cost.toFixed(2)}/page)
                   </Label>
                 </div>
               ))}
@@ -197,7 +252,7 @@ const AdminDetails = () => {
             <div>
               <Label>Total Cost</Label>
               <p className="text-2xl font-bold text-green-600">
-                ${totalCost.toFixed(2)}
+                Rs {totalCost.toFixed(2)}
               </p>
             </div>
           )}

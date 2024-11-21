@@ -77,9 +77,9 @@ export default function AuthPage() {
       localStorage.setItem("token", token);
 
       if (user.role === "student") {
-        navigate("/student-dashboard");
+        navigate("/student");
       } else if (user.role === "admin") {
-        navigate("/admin-dashboard");
+        navigate("/admin");
       }
     } catch (error) {
       setLoginError("Login failed. Please check your credentials.");
