@@ -9,16 +9,19 @@ import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { useToast } from "@/components/toast/use-toast"
 import axios from 'axios'
+import StudentDashboard from './student-dashboard'
+import PaymentProcessing from './payment-loading'
+import PaymentSuccessful from './payment-successfull'
 
 interface PaymentPageProps {
   adminId: string
   fileName: string
   totalCost: number
-  onPaymentSuccess: () => void
-  onPaymentCancel: () => void
+  // onPaymentSuccess: () => void
+  // onPaymentCancel: () => void
 }
 
-const PaymentPage: React.FC<PaymentPageProps> = ({ adminId, fileName, totalCost, onPaymentSuccess, onPaymentCancel }) => {
+const PaymentPage: React.FC<PaymentPageProps> = ({ adminId, fileName, totalCost }) => {
   const [paymentMethod, setPaymentMethod] = useState<'upi' | 'netbanking' | 'card'>('upi')
   const [upiId, setUpiId] = useState('')
   const [isProcessing, setIsProcessing] = useState(false)
@@ -42,14 +45,29 @@ const PaymentPage: React.FC<PaymentPageProps> = ({ adminId, fileName, totalCost,
       // })
 
       addToast("Payment Successful", `Your payment of Rs ${totalCost.toFixed(2)} has been processed.`, "success")
-      onPaymentSuccess()
-      navigate(`/payment-successful?adminId=${adminId}&fileName=${fileName}&cost=${totalCost.toFixed(2)}`)
+      // onPaymentSuccess()
+      // navigate(`/payment-successful?adminId=${adminId}&fileName=${fileName}&cost=${totalCost.toFixed(2)}`)
+      navigate('/payment-loading')
+      // return <PaymentProcessing onComplete={onPaymentSuccess} />
     } catch (error) {
       console.error('Payment processing error:', error)
       addToast("Payment Failed", "There was an error processing your payment. Please try again.", "destructive")
     } finally {
       setIsProcessing(false)
     }
+  }
+
+  const onPaymentSuccess = () => {
+    return <PaymentSuccessful />
+  }
+
+  const onPaymentCancel = () => {
+    return(
+      <>
+      <h2> Payment has been cancelled! Redirecting...</h2>
+      <StudentDashboard />
+      </>
+    )
   }
 
   return (

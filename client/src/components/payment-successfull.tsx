@@ -21,7 +21,7 @@ export default function PaymentSuccessful() {
   }, [adminId, fileName, cost]);
 
   const handleBackToDashboard = () => {
-    navigate("/student-dashboard");
+    navigate("/student");
   };
 
   return (
@@ -34,12 +34,12 @@ export default function PaymentSuccessful() {
           </CardDescription>
         </CardHeader>
         <CardContent className="pt-6 space-y-4">
-          <p>
+          {/* <p>
             <strong>File Name:</strong> {fileName}
           </p>
           <p>
             <strong>Total Cost:</strong> ${cost}
-          </p>
+          </p> */}
           <Button
             onClick={handleBackToDashboard}
             className="w-full bg-blue-500 hover:bg-blue-600"

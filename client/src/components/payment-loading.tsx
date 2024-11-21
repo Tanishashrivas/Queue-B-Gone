@@ -3,13 +3,15 @@
 import React, { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Loader2 } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 
 interface PaymentProcessingProps {
   onComplete: () => void
 }
 
 export default function PaymentProcessing({ onComplete }: PaymentProcessingProps) {
-  const [timeLeft, setTimeLeft] = useState(90) 
+  const navigate = useNavigate()
+  const [timeLeft, setTimeLeft] = useState(60) 
   const [progress, setProgress] = useState(0)
 
   useEffect(() => {
@@ -28,8 +30,15 @@ export default function PaymentProcessing({ onComplete }: PaymentProcessingProps
   }, [onComplete])
 
   useEffect(() => {
-    setProgress((90 - timeLeft) / 90 * 100)
+    setProgress((60 - timeLeft) / 60 * 100)
   }, [timeLeft])
+
+  useEffect(() => {
+    if (timeLeft === 55) {
+      navigate('/payment-successfull') // Redirect to "Payment Successful" page
+      // navigate('/student') 
+    }
+  }, [timeLeft, navigate])
 
   const radius = 50
   const circumference = 2 * Math.PI * radius

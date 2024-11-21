@@ -13,11 +13,15 @@ import {
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import axios from "axios";
+import { getDocument, GlobalWorkerOptions } from "pdfjs-dist";
 import { ChangeEvent, FormEvent, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import FileUpload from "./file-upload";
-import PaymentPage from "./payment-page";
 import PaymentProcessing from "./payment-loading";
+import PaymentPage from "./payment-page";
+
+// Set the worker source
+GlobalWorkerOptions.workerSrc = "/pdf.worker.mjs";
 
 interface Admin {
   id: string;
@@ -61,11 +65,18 @@ const AdminDetails = () => {
     }
   };
 
-  const calculateTotalCost = (file: File, type: "B/W" | "Color") => {
+  const calculateTotalCost = async (file: File, type: "B/W" | "Color") => {
     const option = printOptions.find((opt) => opt.type === type);
+
     if (option) {
-      const pages = Math.ceil(file.size / 1000); // Assuming 1 page per 1000 bytes
-      setTotalCost(pages * option.cost);
+      try {
+        const pdf = await getDocument(URL.createObjectURL(file)).promise;
+        const pages = pdf.numPages;
+        setTotalCost(pages * option.cost);
+        console.log("file data", pages, file.size);
+      } catch (error) {
+        console.error("Error reading PDF file:", error);
+      }
     }
   };
 
@@ -94,6 +105,8 @@ const AdminDetails = () => {
   };
 
   const handlePaymentSuccess = async () => {
+    console.log("payment success debug log");
+
     if (admin && admin.id) {
       const formData = new FormData();
       formData.append("file", file!);
@@ -113,6 +126,9 @@ const AdminDetails = () => {
         );
 
         console.log(response.data);
+        // ?adminId=${admin.id}&fileName=${
+        //   file!.name
+        // }&cost=${totalCost.toFixed(2)}
 
         addToast(
           "Upload Successful",
@@ -122,11 +138,7 @@ const AdminDetails = () => {
           "success"
         );
 
-        navigate(
-          `/payment-successful?adminId=${admin.id}&fileName=${
-            file!.name
-          }&cost=${totalCost.toFixed(2)}`
-        );
+        navigate(`/payment-page`);
       } catch (error) {
         console.error("Error uploading file:", error);
         addToast("Error uploading file", "Please try again.", "destructive");
@@ -159,7 +171,6 @@ const AdminDetails = () => {
             },
           }
         );
-        console.log("Admin data fetched successfully:", response.data);
         setAdmin(response.data);
       } catch (error) {
         console.error("Error fetching admin data:", error);
@@ -203,7 +214,8 @@ const AdminDetails = () => {
       //   onPaymentSuccess={handlePaymentSuccess}
       //   onPaymentCancel={handlePaymentCancel}
       // />
-      <PaymentProcessing onComplete={handlePaymentSuccess}/>
+      // <PaymentProcessing onComplete={handlePaymentSuccess} />
+      <PaymentPage adminId={id || ""} fileName={file?.name || ""} totalCost={totalCost} />
     );
   }
 
