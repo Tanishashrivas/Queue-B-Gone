@@ -19,8 +19,8 @@ interface Document {
 }
 
 const AdminDashboard = () => {
-  const { addToast } = useToast(); 
-  
+  const { addToast } = useToast();
+
   const [documents, setDocuments] = useState<Document[]>([
     { id: '1', fileName: 'Assignment1.pdf', studentName: 'Alice Johnson', price: 10, tokenNumber: 'TOK001', status: 'Pending', printType: 'B/W' },
     { id: '2', fileName: 'Thesis.pdf', studentName: 'Bob Smith', price: 25, tokenNumber: 'TOK002', status: 'Pending', printType: 'Color' },
@@ -33,14 +33,14 @@ const AdminDashboard = () => {
         doc.id === id ? { ...doc, status: newStatus } : doc
       )
     );
-  
+
     addToast(
       'Status Updated',
       `Document ${id} has been ${newStatus.toLowerCase()}.`,
       newStatus === 'Approved' ? 'success' : 'error'
     );
   };
-  
+
   const handleUpdateQueue = () => {
     addToast(
       'Queue Updated',
@@ -55,13 +55,13 @@ const AdminDashboard = () => {
         doc.id === id ? { ...doc, printType: newPrintType } : doc
       )
     );
-  
+
     addToast(
       'Print Type Updated',
       `Document ${id} print type has been updated to ${newPrintType}.`,
       'info'
     );
-  };  
+  };
 
   const getStatusColor = (status: 'Pending' | 'Approved' | 'Rejected') => {
     switch (status) {
@@ -97,7 +97,7 @@ const AdminDashboard = () => {
                 <TableRow key={doc.id} className="hover:bg-gray-100">
                   <TableCell>{doc.fileName}</TableCell>
                   <TableCell>{doc.studentName}</TableCell>
-                  <TableCell>${doc.price}</TableCell>
+                  <TableCell>Rs.{doc.price}</TableCell>
                   <TableCell>{doc.tokenNumber}</TableCell>
                   <TableCell>
                     <Select
