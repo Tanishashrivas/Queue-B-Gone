@@ -13,17 +13,21 @@ export const useToast = () => {
     type: ToastType = "info",
     timeout: number | null = 3000
   ) => {
-    const id = Math.random().toString(36).substring(7); 
+    const id = Math.random().toString(36).substring(7);
     const newToast = { id, title, description, type };
 
     setToastList((prev) => [...prev, newToast]);
 
     if (timeout !== null) {
       setTimeout(() => {
-        setToastList((prev) => prev.filter((toast) => toast.id !== id)); 
+        removeToast(id);
       }, timeout);
     }
   };
 
-  return { addToast, toastList };
+  const removeToast = (id: string) => {
+    setToastList((prev) => prev.filter((toast) => toast.id !== id));
+  };
+
+  return { addToast, removeToast, toastList };
 };

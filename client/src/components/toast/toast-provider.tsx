@@ -1,15 +1,23 @@
-import React, { createContext, useContext } from "react";
+import React, { createContext, useContext, ReactNode } from "react";
 import { useToast } from "./use-toast";
 import { Toaster } from "./toaster";
 
-export const ToastContext = createContext<ReturnType<typeof useToast>>({
-  toasts: [],
-  addToast: () => {},
-  removeToast: () => {},
+// Define the context type
+type ToastContextType = ReturnType<typeof useToast>;
+
+// Create the context with a default value
+export const ToastContext = createContext<ToastContextType>({
+  toastList: [], // Correct property name
+  addToast: () => { },
+  removeToast: () => { },
 });
 
-export const ToastProvider: React.FC<{ children?: React.ReactNode }> = ({ children = null }) => {
-  const toastHelpers = useToast();
+interface ToastProviderProps {
+  children?: ReactNode;
+}
+
+export const ToastProvider: React.FC<ToastProviderProps> = ({ children = null }) => {
+  const toastHelpers = useToast(); // Use the custom hook
 
   return (
     <ToastContext.Provider value={toastHelpers}>
@@ -19,5 +27,13 @@ export const ToastProvider: React.FC<{ children?: React.ReactNode }> = ({ childr
   );
 };
 
-// Hook to access toast context easily
-export const useToastContext = () => useContext(ToastContext);
+// Hook for accessing the context
+export const useToastContext = (): ToastContextType => {
+  const context = useContext(ToastContext);
+
+  if (!context) {
+    throw new Error("useToastContext must be used within a ToastProvider");
+  }
+
+  return context;
+};
