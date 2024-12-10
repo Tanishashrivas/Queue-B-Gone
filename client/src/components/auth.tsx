@@ -36,6 +36,19 @@ export default function AuthPage() {
 
   const navigate = useNavigate();
 
+  const validateEmail = (email: string) => {
+    const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return regex.test(email);
+  };
+
+  const validateMobile = (mobile: string) => {
+    return /^\d{10}$/.test(mobile);  // Check if the mobile number has 10 digits
+  };
+
+  const validatePassword = (password: string) => {
+    return password.length >= 6; // Check if password is at least 6 characters long
+  };
+
   const handleRoleChange = (value: string) => {
     setRole(value);
     setIsAdmin(value === "admin");
@@ -43,6 +56,21 @@ export default function AuthPage() {
 
   const handleRegister = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+
+    if (!validateEmail(email)) {
+      alert("Please enter a valid email.");
+      return;
+    }
+
+    if (!validateMobile(mobileNumber)) {
+      alert("Mobile number must be exactly 10 digits.");
+      return;
+    }
+
+    if (!validatePassword(password)) {
+      alert("Password must be at least 6 characters.");
+      return;
+    }
 
     try {
       const response = await axios.post("http://localhost:5000/api/auth/register", {
@@ -54,7 +82,6 @@ export default function AuthPage() {
         address,
       });
       const { token, user } = response.data;
-
       localStorage.setItem("token", token);
 
       if (user.role === "student") {
